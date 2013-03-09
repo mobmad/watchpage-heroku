@@ -10,7 +10,7 @@ your application has access to send to.
 
 ## Installing on heroku
 
-1. `curl -OL https://github.com/mobmad/watchpage-heroku/archive/master.zip > watchpage-heroku.zip && unzip watchpage-heroku.zip`
+1. [Download](https://github.com/mobmad/watchpage-heroku/archive/master.zip) and unzip archive
 2. Modify `Procfile` to send the URL of the site you wish to monitor
 3. `git commit -am "Changed URL"`
 4. Run `heroku create --buildpack http://github.com/ryandotsmith/null-buildpack.git`
