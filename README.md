@@ -2,7 +2,7 @@
 
 Has a website changed? This small shell script will poll for changes and notify you when they occur.
 
-## Configurting SMS notifications
+## Configuring SMS notifications
 
 Register for a [Twilio](https://www.twilio.com) account to receive SMS/Call notifications. The `TWILIO_FROM` variable used 
 below must be a number you can use for sending SMSes and must be configured in your account. `TWILIO_TO` may be any number
