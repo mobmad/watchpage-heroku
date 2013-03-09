@@ -1,20 +1,70 @@
 #!/usr/bin/env bash
 echo "Starting to monitor $URL"
-prev=$(curl -L --silent $URL|md5sum|cut -d ' ' -f 1)
-echo "Fetched initial version: $prev"
+if [[ -n $TEST_SEND_ON_START ]]; then
+	prev="TEST-OF-NOTIFICATIONS-IGNORE-THIS" # will send notifications the first time
+else
+	prev=$(curl -L --silent $URL|md5sum|cut -d ' ' -f 1)
+fi
+echo "Initial version: $prev"
+
+MAIL_NOTIFICATIONS=true
+SMS_NOTIFICATIONS=true
+
+if [[ ! ( -n $MAIL_RECIPIENTS && -n $SENDGRID_USERNAME && -n $SENDGRID_USERNAME ) ]]; then
+	MAIL_NOTIFICATIONS=false
+	echo "Required parameters for mailing not set - email notifications unavailable"
+fi
+
+if [[ ! ( -n $TWILIO_FROM && -n $SMS_RECIPIENTS && -n $TWILIO_ACCOUNT_SID && -n $TWILIO_TOKEN ) ]]; then
+	SMS_NOTIFICATIONS=false
+	echo "Required parameters for SMS not set - sms notifications unavailable"
+fi
+
+if !($SMS_NOTIFICATIONS || $MAIL_NOTIFICATIONS); then
+	echo "Neither SMS or Email notification configured. At least one required. Aborting."
+	exit 1
+fi
 
 while true; do
 	current=$(curl -L --silent $URL|md5sum|cut -d ' ' -f 1)
 	echo "Fetched current version: $current"
 	if [ $current != $prev ]; then
+		message="$URL changed from $prev to $current"
 		prev=$current
 	  	echo "Content changed!"
 
-		curl -X POST "https://api.twilio.com/2010-04-01/Accounts/$TWILIO_ACCOUNT_SID/SMS/Messages.xml" \
-				--data-urlencode "From=$TWILIO_FROM" \
-				--data-urlencode "To=$TWILIO_TO" \
-				--data-urlencode "Body=$URL changed!" \
-				-u "$TWILIO_ACCOUNT_SID:$TWILIO_TOKEN"
+		# ------------------------------------------------------------------------------------------------
+		# SEND SMS
+		# ------------------------------------------------------------------------------------------------
+		if $SMS_NOTIFICATIONS; then
+			for number in $SMS_RECIPIENTS
+			do
+				curl -X POST "https://api.twilio.com/2010-04-01/Accounts/$TWILIO_ACCOUNT_SID/SMS/Messages.xml" \
+					--data-urlencode "From=$TWILIO_FROM" \
+					--data-urlencode "To=$number" \
+					--data-urlencode "Body=$message" \
+					-u "$TWILIO_ACCOUNT_SID:$TWILIO_TOKEN"
+			done
+		fi
+
+		# ------------------------------------------------------------------------------------------------
+		# SEND EMAIL
+		# ------------------------------------------------------------------------------------------------
+		fromname="Watchpage"
+		subject=$message
+		text=$subject
+
+		if $MAIL_NOTIFICATIONS; then
+			curl -v -X POST https://sendgrid.com/api/mail.send.json \
+				--data "$MAIL_RECIPIENTS" \
+				--data-urlencode "subject=$subject" \
+				--data-urlencode "text=$text" \
+				--data-urlencode "from=$SENDGRID_USERNAME" \
+				--data-urlencode "fromname=$fromname" \
+				--data-urlencode "api_user=$SENDGRID_USERNAME" \
+				--data-urlencode "api_key=$SENDGRID_PASSWORD"
+		fi
+
 	fi
 	
 	# Sleep N mins
