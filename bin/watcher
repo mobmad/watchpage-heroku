@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-prev=$(curl -L --silent $1|md5sum|cut -d ' ' -f 1)
+echo "Starting to monitor $URL"
+prev=$(curl -L --silent $URL|md5sum|cut -d ' ' -f 1)
 echo "Fetched initial version: $prev"
 
 while true; do
-	current=$(curl -L --silent $1|md5sum|cut -d ' ' -f 1)
+	current=$(curl -L --silent $URL|md5sum|cut -d ' ' -f 1)
 	echo "Fetched current version: $current"
 	if [ $current != $prev ]; then
 		prev=$current
@@ -12,7 +13,7 @@ while true; do
 		curl -X POST "https://api.twilio.com/2010-04-01/Accounts/$TWILIO_ACCOUNT_SID/SMS/Messages.xml" \
 				--data-urlencode "From=$TWILIO_FROM" \
 				--data-urlencode "To=$TWILIO_TO" \
-				--data-urlencode "Body=$1 changed!" \
+				--data-urlencode "Body=$URL changed!" \
 				-u "$TWILIO_ACCOUNT_SID:$TWILIO_TOKEN"
 	fi
 	

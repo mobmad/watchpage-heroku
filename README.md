@@ -15,7 +15,17 @@ your application has access to send to.
 3. `git init && git add . && git commit -m "Created watcher"`
 4. Run `heroku create --buildpack http://github.com/ryandotsmith/null-buildpack.git`
 5. `git push heroku master`
-6. `heroku config:set SLEEP_MINS=12 TWILIO_ACCOUNT_SID=<insert> TWILIO_TOKEN=<insert> TWILIO_FROM=<+1234567890> TWILIO_TO=<+4712345678>` this will poll every 12 minute and configure SMS notifications
+6. Configure (SLEEP_MINS if how often it will poll URL for changes:
+
+		heroku config:set \
+		URL=http://inserturltoyoursitehere.com \
+		SLEEP_MINS=12 \
+		TWILIO_ACCOUNT_SID=<insert> \
+		TWILIO_TOKEN=<insert> \
+		TWILIO_FROM=<+1234567890> \
+		TWILIO_TO=<+4712345678>
+
+
 7. `heroku ps:scale worker=1` (can be stopped by setting worker to 0, check status with `heroku ps`)
 8. `heroku logs` (to verify it is running. It should say Fetched inital version, then Fetch current version)
 

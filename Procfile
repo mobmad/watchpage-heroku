@@ -1,1 +1,1 @@
-worker: bin/watcher http://<INSERT YOUR URL HERE>
+worker: bin/watcher
