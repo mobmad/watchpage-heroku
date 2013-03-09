@@ -12,7 +12,7 @@ your application has access to send to.
 
 1. [Download](https://github.com/mobmad/watchpage-heroku/archive/master.zip) and unzip archive
 2. Modify `Procfile` to send the URL of the site you wish to monitor
-3. `git commit -am "Changed URL"`
+3. `git init && git add . && git commit -m "Created watcher"`
 4. Run `heroku create --buildpack http://github.com/ryandotsmith/null-buildpack.git`
 5. `git push heroku master`
 6. `heroku config:set SLEEP_MINS=12 TWILIO_ACCOUNT_SID=<insert> TWILIO_TOKEN=<insert> TWILIO_FROM=<+1234567890> TWILIO_TO=<+4712345678>` this will poll every 12 minute and configure SMS notifications
