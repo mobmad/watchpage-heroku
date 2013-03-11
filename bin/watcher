@@ -9,6 +9,7 @@ echo "Initial version: $prev"
 
 MAIL_NOTIFICATIONS=true
 SMS_NOTIFICATIONS=true
+CALLER_NOTIFICATIONS=true
 
 if [[ ! ( -n $MAIL_RECIPIENTS && -n $SENDGRID_USERNAME && -n $SENDGRID_USERNAME ) ]]; then
 	MAIL_NOTIFICATIONS=false
@@ -20,8 +21,13 @@ if [[ ! ( -n $TWILIO_FROM && -n $SMS_RECIPIENTS && -n $TWILIO_ACCOUNT_SID && -n 
 	echo "Required parameters for SMS not set - sms notifications unavailable"
 fi
 
-if !($SMS_NOTIFICATIONS || $MAIL_NOTIFICATIONS); then
-	echo "Neither SMS or Email notification configured. At least one required. Aborting."
+if [[ ! ( -n $TWILIO_FROM && -n $CALLER_RECIPIENTS && -n $TWILIO_ACCOUNT_SID && -n $TWILIO_TOKEN && -n $TWILIO_CALL_RESPONDER ) ]]; then
+	CALLER_NOTIFICATIONS=false
+	echo "Required parameters for Caller not set - caller notifications unavailable"
+fi
+
+if !($SMS_NOTIFICATIONS || $MAIL_NOTIFICATIONS || $CALLER_NOTIFICATIONS); then
+	echo "Neither SMS, Email or Caller notifications configured. At least one required. Aborting."
 	exit 1
 fi
 
@@ -63,6 +69,22 @@ while true; do
 				--data-urlencode "fromname=$fromname" \
 				--data-urlencode "api_user=$SENDGRID_USERNAME" \
 				--data-urlencode "api_key=$SENDGRID_PASSWORD"
+		fi
+
+		# ------------------------------------------------------------------------------------------------
+		# CALL
+		# ------------------------------------------------------------------------------------------------
+		if $CALLER_NOTIFICATIONS; then
+			sleep 30
+			
+			for number in $CALLER_RECIPIENTS
+			do
+				curl -v -X POST "https://api.twilio.com/2010-04-01/Accounts/$TWILIO_ACCOUNT_SID/Calls.xml" \
+					--data-urlencode "From=$TWILIO_FROM" \
+					--data-urlencode "To=$number" \
+					--data-urlencode "Url=$TWILIO_CALL_RESPONDER" \
+					-u "$TWILIO_ACCOUNT_SID:$TWILIO_TOKEN"
+			done
 		fi
 
 	fi
